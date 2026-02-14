@@ -52,6 +52,21 @@ function showError(message) {
     `;
 }
 
+function togglePassword(inputId, button) {
+  const input = document.getElementById(inputId);
+  const icon = button.querySelector('i');
+  
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.classList.remove('fa-eye');
+    icon.classList.add('fa-eye-slash');
+  } else {
+    input.type = 'password';
+    icon.classList.remove('fa-eye-slash');
+    icon.classList.add('fa-eye');
+  }
+}
+
 // API Functions
 async function fetchAPI(endpoint) {
   try {
@@ -1507,9 +1522,15 @@ function renderLogin() {
             <label class="block text-sm font-semibold mb-2 text-gray-700">
               <i class="fas fa-lock mr-2"></i>Password
             </label>
-            <input type="password" name="password" required
-                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-adinkra-brown focus:border-transparent"
-                   placeholder="Enter your password">
+            <div class="relative">
+              <input type="password" name="password" id="login-password" required
+                     class="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-adinkra-brown focus:border-transparent"
+                     placeholder="Enter your password">
+              <button type="button" onclick="togglePassword('login-password', this)" 
+                      class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
           </div>
           
           <button type="submit" class="w-full bg-adinkra-brown text-white py-3 rounded-lg font-semibold hover:bg-adinkra-dark transition">
@@ -1582,18 +1603,30 @@ function renderRegister() {
               <label class="block text-sm font-semibold mb-2 text-gray-700">
                 <i class="fas fa-lock mr-2"></i>Password <span class="text-red-500">*</span>
               </label>
-              <input type="password" name="password" required minlength="8"
-                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-adinkra-brown focus:border-transparent"
-                     placeholder="At least 8 characters">
+              <div class="relative">
+                <input type="password" name="password" id="register-password" required minlength="8"
+                       class="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-adinkra-brown focus:border-transparent"
+                       placeholder="At least 8 characters">
+                <button type="button" onclick="togglePassword('register-password', this)" 
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
             </div>
             
             <div>
               <label class="block text-sm font-semibold mb-2 text-gray-700">
                 <i class="fas fa-lock mr-2"></i>Confirm Password <span class="text-red-500">*</span>
               </label>
-              <input type="password" name="confirm_password" required minlength="8"
-                     class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-adinkra-brown focus:border-transparent"
-                     placeholder="Re-enter password">
+              <div class="relative">
+                <input type="password" name="confirm_password" id="register-confirm-password" required minlength="8"
+                       class="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-adinkra-brown focus:border-transparent"
+                       placeholder="Re-enter password">
+                <button type="button" onclick="togglePassword('register-confirm-password', this)" 
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
             </div>
           </div>
           
@@ -1964,11 +1997,15 @@ async function handleLogin(event) {
 
   try {
     showLoading();
+    console.log('Attempting login...');
+    const csrfToken = getCookie("csrftoken");
+    console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+    
     const response = await fetch("/auth/login/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
+        "X-CSRFToken": csrfToken,
       },
       credentials: "include",
       body: JSON.stringify({
@@ -1977,7 +2014,18 @@ async function handleLogin(event) {
       }),
     });
 
+    console.log('Login response status:', response.status);
+    
+    if (!response.ok) {
+      console.error('Login request failed:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      alert(`Login failed: ${response.status} ${response.statusText}`);
+      return;
+    }
+
     const data = await response.json();
+    console.log('Login response data:', data);
 
     if (data.success) {
       state.isAuthenticated = true;
@@ -1988,7 +2036,8 @@ async function handleLogin(event) {
       alert(data.error || "Login failed");
     }
   } catch (error) {
-    alert("Login failed. Please try again.");
+    console.error('Login error:', error);
+    alert("Login failed: " + error.message);
   } finally {
     hideLoading();
   }
@@ -2009,11 +2058,15 @@ async function handleRegister(event) {
 
   try {
     showLoading();
+    console.log('Attempting registration...');
+    const csrfToken = getCookie("csrftoken");
+    console.log('CSRF Token:', csrfToken ? 'Found' : 'Not found');
+    
     const response = await fetch("/auth/register/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
+        "X-CSRFToken": csrfToken,
       },
       credentials: "include",
       body: JSON.stringify({
@@ -2027,7 +2080,18 @@ async function handleRegister(event) {
       }),
     });
 
+    console.log('Registration response status:', response.status);
+    
+    if (!response.ok) {
+      console.error('Registration request failed:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      alert(`Registration failed: ${response.status} ${response.statusText}`);
+      return;
+    }
+
     const data = await response.json();
+    console.log('Registration response data:', data);
 
     if (data.success) {
       state.isAuthenticated = true;
@@ -2038,7 +2102,8 @@ async function handleRegister(event) {
       alert(data.error || "Registration failed");
     }
   } catch (error) {
-    alert("Registration failed. Please try again.");
+    console.error('Registration error:', error);
+    alert("Registration failed: " + error.message);
   } finally {
     hideLoading();
   }

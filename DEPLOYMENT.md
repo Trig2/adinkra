@@ -28,14 +28,14 @@ git push -u origin main
 
 ### 2.3 Clone Your Repository
 ```bash
-git clone https://github.com/yourusername/your-repo.git
-cd your-repo
+git clone https://github.com/Trig2/adinkra.git
+cd adinkra
 ```
 
 ## Step 3: Create Virtual Environment
 
 ```bash
-cd ~/your-repo
+cd ~/adinkra
 python3.10 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
@@ -49,18 +49,22 @@ Create `.env` file:
 nano .env
 ```
 
-Add (replace with your values):
+Add these values (generate a new SECRET_KEY using the command below):
 ```
 SECRET_KEY=your-super-secret-key-here-change-this
 DEBUG=False
-ALLOWED_HOSTS=yourusername.pythonanywhere.com
-CORS_ALLOWED_ORIGINS=https://yourusername.pythonanywhere.com
+ALLOWED_HOSTS=webcraft.pythonanywhere.com
+CORS_ALLOWED_ORIGINS=https://webcraft.pythonanywhere.com
 ```
+
+**Important**: Use the HTTPS version of your domain. PythonAnywhere provides HTTPS automatically.
 
 Generate a new SECRET_KEY:
 ```bash
 python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
 ```
+
+Copy the output and paste it as the SECRET_KEY value (no quotes needed).
 
 Save and exit (Ctrl+X, Y, Enter)
 
@@ -68,7 +72,7 @@ Save and exit (Ctrl+X, Y, Enter)
 
 ```bash
 source venv/bin/activate
-cd ~/your-repo
+cd ~/adinkra
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py collectstatic --noinput
@@ -87,9 +91,9 @@ python manage.py populate_gye_nyame
 4. Select **Python 3.10**
 
 ### 6.2 Configure Virtual Environment
-In the **Virtualenv** section:
+In the **Virtualenv** section, enter:
 ```
-/home/yourusername/your-repo/venv
+/home/webcraft/adinkra/venv
 ```
 
 ### 6.3 Configure WSGI File
@@ -101,7 +105,8 @@ import os
 from pathlib import Path
 
 # Add project directory to path
-path = '/home/yourusername/your-repo'
+# IMPORTANT: Replace 'webcraft' with YOUR username and 'adinkra' with YOUR repo name
+path = '/home/webcraft/adinkra'
 if path not in sys.path:
     sys.path.insert(0, path)
 
@@ -124,39 +129,38 @@ from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
 ```
 
-**Important**: Replace `yourusername` and `your-repo` with your actual values!
+**Critical**: The `path` variable must point to the directory containing your Django project (where `manage.py` and `adinkra_platform/` folder are located).
 
 ### 6.4 Configure Static Files
-In the **Static files** section, add:
+In the **Static files** section, add these mappings:
 
 | URL          | Directory                                    |
 |--------------|---------------------------------------------|
-| /static/     | /home/yourusername/your-repo/staticfiles    |
-| /media/      | /home/yourusername/your-repo/media          |
+| /static/     | /home/webcraft/adinkra/staticfiles          |
+| /media/      | /home/webcraft/adinkra/media                |
 
-### 6.5 Configure Source Code
-In the **Code** section:
-- **Source code**: `/home/yourusername/your-repo`
-- **Working directory**: `/home/yourusername/your-repo`
+**Note**: The newer PythonAnywhere interface no longer has a "Source code" or "Working directory" section in the Web tab. These are configured automatically based on your WSGI file path. If you see these fields, set them to `/home/webcraft/adinkra`.
 
 ## Step 7: Media Files Setup
 
+Create media directories in the bash console:
 ```bash
-cd ~/your-repo
+cd ~/adinkra
 mkdir -p media/adinkra_symbols
 mkdir -p media/lesson_images
 ```
 
-Upload your logo and media files to the appropriate directories.
+Upload your logo and media files to the appropriate directories using PythonAnywhere's Files interface.
 
 ## Step 8: Reload Web App
 
-1. Click the green **Reload** button at the top
-2. Visit: `https://yourusername.pythonanywhere.com`
+1. Click the green **Reload** button at the top of the Web tab
+2. Visit: `https://webcraft.pythonanywhere.com`
+3. If you see errors, check the **Error log** tab for details
 
 ## Step 9: Access Admin Panel
 
-1. Go to: `https://yourusername.pythonanywhere.com/admin`
+1. Go to: `https://webcraft.pythonanywhere.com/admin`
 2. Login with superuser credentials
 3. Add modules, lessons, and content
 
@@ -168,9 +172,15 @@ Upload your logo and media files to the appropriate directories.
 
 ### Common Issues
 
+**Issue**: ModuleNotFoundError: No module named 'adinkra_platform'
+- **Cause**: WSGI file path is incorrect
+- **Fix**: Edit WSGI file, ensure `path = '/home/webcraft/adinkra'` (line ~9)
+- Make sure the path points to the directory containing `manage.py` and `adinkra_platform/`
+- Save and reload the web app
+
 **Issue**: Static files not loading
 ```bash
-cd ~/your-repo
+cd ~/adinkra
 source venv/bin/activate
 python manage.py collectstatic --noinput
 ```
@@ -178,37 +188,51 @@ Then reload the web app.
 
 **Issue**: Database errors
 ```bash
-cd ~/your-repo
+cd ~/adinkra
 source venv/bin/activate
 python manage.py migrate
 ```
 
 **Issue**: Permission errors
 ```bash
-chmod -R 755 ~/your-repo
-chmod 644 ~/your-repo/db.sqlite3
+chmod -R 755 ~/adinkra
+chmod 644 ~/adinkra/db.sqlite3
 ```
 
-**Issue**: Module not found
+**Issue**: Module not found (after path is correct)
 ```bash
-cd ~/your-repo
+cd ~/adinkra
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
 ### View Django Shell
 ```bash
-cd ~/your-repo
+cd ~/adinkra
 source venv/bin/activate
 python manage.py shell
 ```
+
+**Issue**: Login/Registration failing with no error message
+- **Cause**: CORS configuration not set correctly
+- **Fix**: Make sure your `.env` file has the correct CORS_ALLOWED_ORIGINS:
+  ```bash
+  cd ~/adinkra
+  nano .env
+  ```
+  Add or update this line (replace `webcraft` with your username):
+  ```
+  CORS_ALLOWED_ORIGINS=https://webcraft.pythonanywhere.com
+  ```
+  Save (Ctrl+X, Y, Enter) and reload the web app.
+- **Also check**: Browser console (F12) for CORS errors. If you see "blocked by CORS policy", this confirms the issue.
 
 ## Updating Your Site
 
 When you push changes to GitHub:
 
 ```bash
-cd ~/your-repo
+cd ~/adinkra
 git pull origin main
 source venv/bin/activate
 pip install -r requirements.txt  # If requirements changed
@@ -223,7 +247,7 @@ Then reload the web app from the Web tab.
 1. Go to **Web** tab
 2. Add your custom domain
 3. Update DNS settings at your domain registrar:
-   - CNAME record pointing to `yourusername.pythonanywhere.com`
+   - CNAME record pointing to `webcraft.pythonanywhere.com`
 
 ## Security Checklist
 

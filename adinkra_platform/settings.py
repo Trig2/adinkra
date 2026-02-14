@@ -150,12 +150,23 @@ AUTH_USER_MODEL = 'users.User'
 # CORS settings
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only in development
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-]
+
+# Get CORS origins from environment variable or use defaults
+cors_origins_str = config('CORS_ALLOWED_ORIGINS', default='http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000,http://127.0.0.1:8000')
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_str.split(',')]
+
+# Security settings for production
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True  # Use secure cookies over HTTPS
+    SESSION_COOKIE_SECURE = True  # Use secure cookies over HTTPS
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF cookie
+    # CSRF_TRUSTED_ORIGINS is needed for POST requests from your frontend
+    CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
+else:
+    # Development settings - less strict
+    CSRF_COOKIE_HTTPONLY = False
 
 # REST Framework settings
 REST_FRAMEWORK = {
